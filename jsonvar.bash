@@ -154,22 +154,22 @@ jsonvar() {
 		fi
 
 		# check variables given
-		local error='false'
+		local _jv_error='false'
 		for _jv_key in "${_jv_variables[@]}"; do
 			# warn the user if they gave us an internal name
 			if [[ $_jv_key == _jv_* ]]; then
 				echo "[error] ignoring internal variable '$_jv_key'" >&2
-				error='true'
+				_jv_error='true'
 			fi
 
 			# check to make sure the variable is defined
 			if ! declare -p "$_jv_key" &>/dev/null; then
 				echo "[error] variable '$_jv_key' not defined" >&2
-				error='true'
+				_jv_error='true'
 			fi
 		done
 
-		if $error; then
+		if $_jv_error; then
 			return 1
 		fi
 	fi
