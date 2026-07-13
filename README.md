@@ -51,6 +51,15 @@ Known Limitations
 2. Filters out variables that start with `_jv_` since they are used internally
 3. Sparse arrays are squished when exported
 
+YouTube
+-------
+
+Watch me build this live on YouTube.
+
+<a href="https://www.youtube.com/watch?v=GXw67QpDPCE"><img alt="Bash jsonvar YouTube
+Thumbnail" src="https://files.daveeddy.com/ysap/bash-jsonvar-thumbnail.jpg"
+/></a>
+
 License
 -------
 
