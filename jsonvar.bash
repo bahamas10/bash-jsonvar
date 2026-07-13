@@ -182,7 +182,7 @@ jsonvar() {
 
 		# filter out internal variables by name
 		if [[ $_jv_key == _jv_* ]]; then
-			unset _jv_variables[_jv_i]
+			unset '_jv_variables[_jv_i]'
 			continue
 		fi
 
