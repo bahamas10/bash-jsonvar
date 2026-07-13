@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+name='foo bar'
+echo "${!name}"

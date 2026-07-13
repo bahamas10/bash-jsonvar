@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+json-encode() {
+	local s=$1
+
+	local LC_ALL=C
+	local -A table=()
+
+	# we can start at 1 because bash variables can't have nul bytes in them
+	local hex byte esc i
+	for ((i = 1; i < 0x20; i++)); do
+		printf -v hex '%02x' "$i"
+
+		printf -v byte '%b' "\\x$hex"
+		printf -v esc '\\u%04x' "$i"
+		table[$byte]=$esc
+	done
+
+	table[$'\b']='\b'
+	table[$'\t']='\t'
+	table[$'\n']='\n'
+	table[$'\f']='\f'
+	table[$'\r']='\r'
+
+	table['\']='\\'
+	table['"']='\"'
+
+	# serialize the string
+	local out=''
+	local len=${#s}
+	local c
+	for ((i = 0; i < len; i++)); do
+		c=${s:i:1}
+		esc=${table[$c]}
+
+		if [[ -n $esc ]]; then
+			# lookup table matched for this byte
+			out+=$esc
+		else
+			# no lookup table match, byte falls through
+			out+=$c
+		fi
+	done
+
+
+	printf '"%s"\n' "$out"
+}
+
+json-encode "$@"

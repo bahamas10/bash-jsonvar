@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+get-attrs() {
+	local name=$1
+	local -n ref=$name
+
+	case "${ref@a}" in
+		*a*) # process indexed array
+			local value
+			for value in "${ref[@]}"; do
+				echo "$value"
+			done
+			;;
+		*A*) # process associative array
+			local key value
+			for key in "${!ref[@]}"; do
+				value=${ref[$key]}
+				echo "$key: $value"
+			done
+			;;
+		*i*) # process integer
+			echo "$ref"
+			;;
+		*) # anything else, it's probably a string lol
+			echo "'$ref'"
+			;;
+	esac
+
+}
+
+declare -a test_indexed=(a b c)
+declare -A test_associative=([a]=1 [b]=2 [c]=3)
+declare -i test_integer=67
+declare -- test_string='hello world'
+
+ref=(foo bar baz)
+get-attrs ref
