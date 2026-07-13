@@ -135,6 +135,8 @@ jsonvar() {
 	done
 	shift "$((OPTIND - 1))"
 
+	local _jv_key
+
 	# figure out what variables to look at
 	local -a _jv_variables
 	if $_jv_all; then
@@ -152,7 +154,7 @@ jsonvar() {
 		fi
 
 		# check variables given
-		local _jv_key error='false'
+		local error='false'
 		for _jv_key in "${_jv_variables[@]}"; do
 			# warn the user if they gave us an internal name
 			if [[ $_jv_key == _jv_* ]]; then
@@ -176,7 +178,7 @@ jsonvar() {
 	local _jv_i
 	local _jv_len=${#_jv_variables[@]}
 	for ((_jv_i = 0; _jv_i < _jv_len; _jv_i++)); do
-		local _jv_key=${_jv_variables[_jv_i]}
+		_jv_key=${_jv_variables[_jv_i]}
 
 		# filter out internal variables by name
 		if [[ $_jv_key == _jv_* ]]; then
@@ -216,12 +218,15 @@ jsonvar() {
 
 if ( return 0 &>/dev/null ); then
 	# we are being sourced
+	# TODO: add completions?
 	true
 else
 	# we are being executed directly
-	declare -A test_assoc=([foo]=1 [bar]=2 [baz]=3)
-
-	sparse_array=(foo bar baz [67]=bat)
+	declare -a test_indexed=(a b c)
+	declare -a test_sparse=(a b c [67]=d)
+	declare -A test_assoc=([a]=1 [b]=2 [c]=3)
+	declare -i test_int=67
+	declare -- test_string='hello world'
 
 	jsonvar "$@"
 fi
