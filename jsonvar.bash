@@ -149,7 +149,7 @@ jsonvar() {
 		# ensure the user gave us *something*
 		if (( ${#_jv_variables[@]} == 0 )); then
 			echo 'variable name or flag required' >&2
-			_jv-usage
+			_jv-usage >&2
 			return 2
 		fi
 
