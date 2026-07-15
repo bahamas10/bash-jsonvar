@@ -140,9 +140,9 @@ jsonvar() {
 	# figure out what variables to look at
 	local -a _jv_variables
 	if $_jv_all; then
-		compgen -v -V _jv_variables
+		readarray -t _jv_variables < <(compgen -v)
 	elif $_jv_exported; then
-		compgen -e -V _jv_variables
+		readarray -t _jv_variables < <(compgen -e)
 	else
 		_jv_variables=("$@")
 
