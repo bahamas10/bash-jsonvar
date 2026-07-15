@@ -216,10 +216,19 @@ jsonvar() {
 	$_jv_value || echo '}'
 }
 
+_jv-complete() {
+	COMPREPLY=(
+		# add all variables
+		$(compgen -v -- "${COMP_WORDS[COMP_CWORD]}")
+
+		# add the individual flags
+		$(compgen -W '-a -e -v -h' -- "${COMP_WORDS[COMP_CWORD]}")
+	)
+}
+
 if ( return 0 &>/dev/null ); then
 	# we are being sourced
-	# TODO: add completions?
-	true
+	complete -F _jv-complete jsonvar
 else
 	# we are being executed directly
 	declare -a test_indexed=(a b c)
