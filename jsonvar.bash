@@ -84,7 +84,7 @@ _jv-encode-variable() {
 				((_jv_i++))
 				_jv-json-encode-string "$_jv_value"
 				if ((_jv_i < ${#_jv_ref[@]})); then
-					echo -n ','
+					echo -n ', '
 				fi
 			done
 			echo -n ']'
@@ -98,11 +98,11 @@ _jv-encode-variable() {
 				_jv_value=${_jv_ref[$_jv_key]}
 
 				_jv-json-encode-string "$_jv_key"
-				echo -n ':'
+				echo -n ': '
 				_jv-json-encode-string "$_jv_value"
 
 				if ((_jv_i < ${#_jv_ref[@]})); then
-					echo -n ','
+					echo -n ', '
 				fi
 			done
 			echo -n '}'
