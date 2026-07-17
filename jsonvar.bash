@@ -158,7 +158,7 @@ jsonvar() {
 		for _jv_key in "${_jv_variables[@]}"; do
 			# warn the user if they gave us an internal name
 			if [[ $_jv_key == _jv_* ]]; then
-				echo "[error] ignoring internal variable '$_jv_key'" >&2
+				echo "[error] invalid internal variable '$_jv_key'" >&2
 				_jv_error='true'
 			fi
 
