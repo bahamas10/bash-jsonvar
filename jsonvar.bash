@@ -57,7 +57,7 @@ _jv-json-encode-string() {
 	local c
 	for ((i = 0; i < len; i++)); do
 		c=${s:i:1}
-		esc=${table[$c]}
+		esc=${table[$c]-}
 
 		if [[ -n $esc ]]; then
 			# lookup table matched for this byte
@@ -150,10 +150,10 @@ _jv-encode-variable() {
 			echo -n '}'
 			;;
 		*i*) # process integer
-			_jv-json-encode-number "$_jv_ref"
+			_jv-json-encode-number "${_jv_ref-}"
 			;;
 		*) # anything else, it's probably a string lol
-			_jv-json-encode-string "$_jv_ref"
+			_jv-json-encode-string "${_jv_ref-}"
 			;;
 	esac
 
