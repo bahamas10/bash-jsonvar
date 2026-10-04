@@ -12,7 +12,7 @@
 
 _jv-usage() {
 	local usage
-	IFS=$' \n\t' read -r -d '' usage <<-EOF
+	IFS=$' \n\t' read -r -d '' usage <<-EOF || true
 	Usage: jsonvar [-aev] [[name], ...]
 
 	Serialize bash variables to JSON output
@@ -111,7 +111,7 @@ _jv-encode-variable() {
 			echo -n '['
 			local _jv_value _jv_i=0
 			for _jv_value in "${_jv_ref[@]}"; do
-				((_jv_i++))
+				((++_jv_i))
 
 				# check member type
 				if [[ $_jv_attrs == *i* ]]; then
@@ -130,7 +130,7 @@ _jv-encode-variable() {
 			echo -n '{'
 			local _jv_key _jv_value _jv_i=0
 			for _jv_key in "${!_jv_ref[@]}"; do
-				((_jv_i++))
+				((++_jv_i))
 
 				_jv_value=${_jv_ref[$_jv_key]}
 
@@ -235,7 +235,7 @@ jsonvar() {
 	$_jv_value || echo '{'
 	_jv_i=0
 	for _jv_key in "${_jv_variables[@]}"; do
-		((_jv_i++))
+		((++_jv_i))
 
 		if ! $_jv_value; then
 			# indent
