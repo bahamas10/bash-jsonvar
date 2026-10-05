@@ -165,17 +165,29 @@ jsonvar() {
 	local _jv_value='false'
 
 	# get arguments from user
-	local OPTIND OPTARG _jv_opt
-	while getopts 'aevh' _jv_opt; do
-		case "$_jv_opt" in
-			a) _jv_all='true';;
-			e) _jv_exported='true';;
-			v) _jv_value='true';;
-			h) _jv-usage; return 0;;
-			*) _jv-usage >&2; return 2;;
-		esac
+	local _jv_opts
+	while [[ ${1-} == -?* ]]; do
+		if [[ $1 == -- ]]; then
+			shift
+			break
+		fi
+		_jv_opts=${1#-}
+		while [[ -n $_jv_opts ]]; do
+			case "${_jv_opts:0:1}" in
+				a) _jv_all='true';;
+				e) _jv_exported='true';;
+				v) _jv_value='true';;
+				h) _jv-usage; return 0;;
+				*)
+					echo "illegal option -- ${_jv_opts:0:1}" >&2
+					_jv-usage >&2
+					return 2
+					;;
+			esac
+			_jv_opts=${_jv_opts:1}
+		done
+		shift
 	done
-	shift "$((OPTIND - 1))"
 
 	local _jv_key
 
