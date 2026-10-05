@@ -218,6 +218,7 @@ jsonvar() {
 
 	# loop the variables first to filter out hidden / internal var names
 	local _jv_i
+	local -A _jv_seen=()
 	local _jv_len=${#_jv_variables[@]}
 	for ((_jv_i = 0; _jv_i < _jv_len; _jv_i++)); do
 		_jv_key=${_jv_variables[_jv_i]}
@@ -228,7 +229,12 @@ jsonvar() {
 			continue
 		fi
 
-		# variable name was good, do nothing
+		# filter out duplicate names
+		if [[ -n ${_jv_seen[$_jv_key]-} ]]; then
+			unset '_jv_variables[_jv_i]'
+			continue
+		fi
+		_jv_seen[$_jv_key]=1
 	done
 
 	# loop the remaining variables and format them
