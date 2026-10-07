@@ -12,7 +12,7 @@
 
 _jv-usage() {
 	local usage
-	IFS=$' \n\t' read -r -d '' usage <<-EOF
+	IFS=$' \n\t' read -r -d '' usage <<-EOF || true
 	Usage: jsonvar [-aev] [[name], ...]
 
 	Serialize bash variables to JSON output
@@ -174,7 +174,7 @@ _jv-json-encode-string() {
 	local c
 	for ((i = 0; i < len; i++)); do
 		c=${s:i:1}
-		esc=${table[$c]}
+		esc=${table[$c]-}
 
 		if [[ -n $esc ]]; then
 			# lookup table matched for this byte
@@ -228,7 +228,7 @@ _jv-encode-variable() {
 			echo -n '['
 			local _jv_value _jv_i=0
 			for _jv_value in "${_jv_ref[@]}"; do
-				((_jv_i++))
+				((++_jv_i))
 
 				# check member type
 				if [[ $_jv_attrs == *i* ]]; then
@@ -247,7 +247,7 @@ _jv-encode-variable() {
 			echo -n '{'
 			local _jv_key _jv_value _jv_i=0
 			for _jv_key in "${!_jv_ref[@]}"; do
-				((_jv_i++))
+				((++_jv_i))
 
 				_jv_value=${_jv_ref[$_jv_key]}
 
@@ -267,10 +267,10 @@ _jv-encode-variable() {
 			echo -n '}'
 			;;
 		*i*) # process integer
-			_jv-json-encode-number "$_jv_ref"
+			_jv-json-encode-number "${_jv_ref-}"
 			;;
 		*) # anything else, it's probably a string lol
-			_jv-json-encode-string "$_jv_ref"
+			_jv-json-encode-string "${_jv_ref-}"
 			;;
 	esac
 
@@ -282,17 +282,29 @@ jsonvar() {
 	local _jv_value='false'
 
 	# get arguments from user
-	local OPTIND OPTARG _jv_opt
-	while getopts 'aevh' _jv_opt; do
-		case "$_jv_opt" in
-			a) _jv_all='true';;
-			e) _jv_exported='true';;
-			v) _jv_value='true';;
-			h) _jv-usage; return 0;;
-			*) _jv-usage >&2; return 2;;
-		esac
+	local _jv_opts
+	while [[ ${1-} == -?* ]]; do
+		if [[ $1 == -- ]]; then
+			shift
+			break
+		fi
+		_jv_opts=${1#-}
+		while [[ -n $_jv_opts ]]; do
+			case "${_jv_opts:0:1}" in
+				a) _jv_all='true';;
+				e) _jv_exported='true';;
+				v) _jv_value='true';;
+				h) _jv-usage; return 0;;
+				*)
+					echo "illegal option -- ${_jv_opts:0:1}" >&2
+					_jv-usage >&2
+					return 2
+					;;
+			esac
+			_jv_opts=${_jv_opts:1}
+		done
+		shift
 	done
-	shift "$((OPTIND - 1))"
 
 	local _jv_key
 
@@ -335,6 +347,7 @@ jsonvar() {
 
 	# loop the variables first to filter out hidden / internal var names
 	local _jv_i
+	local -A _jv_seen=()
 	local _jv_len=${#_jv_variables[@]}
 	for ((_jv_i = 0; _jv_i < _jv_len; _jv_i++)); do
 		_jv_key=${_jv_variables[_jv_i]}
@@ -345,14 +358,19 @@ jsonvar() {
 			continue
 		fi
 
-		# variable name was good, do nothing
+		# filter out duplicate names
+		if [[ -n ${_jv_seen[$_jv_key]-} ]]; then
+			unset '_jv_variables[_jv_i]'
+			continue
+		fi
+		_jv_seen[$_jv_key]=1
 	done
 
 	# loop the remaining variables and format them
 	$_jv_value || echo '{'
 	_jv_i=0
 	for _jv_key in "${_jv_variables[@]}"; do
-		((_jv_i++))
+		((++_jv_i))
 
 		if ! $_jv_value; then
 			# indent
