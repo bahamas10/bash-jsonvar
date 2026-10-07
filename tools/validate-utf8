@@ -144,8 +144,8 @@ for s in "${strings[@]}"; do
 	echo -n "testing: ${s@Q}... "
 
 	if validate-utf8 "$s"; then
-		echo 'valid'
+		echo $'\e[92mvalid\e[0m'
 	else
-		echo 'invalid'
+		echo $'\e[91minvalid\e[0m'
 	fi
 done
