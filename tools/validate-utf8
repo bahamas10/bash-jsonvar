@@ -33,6 +33,9 @@ validate-utf8() {
 			# 2 byte character
 			n=2
 
+			# check for overlong sequences
+			(( (b1 & 2#00011111) > 0 )) || return 1
+
 			(( i + 1 < len )) || return 1
 
 			printf -v b2 '%d' "'${s:i+1:1}"
@@ -49,6 +52,9 @@ validate-utf8() {
 		elif (( (b1 & 2#11110000) == 2#11100000 )); then
 			# 3 byte character
 			n=3
+
+			# check for overlong sequences
+			(( (b1 & 2#00011111) > 0 )) || return 1
 
 			(( i + 2 < len )) || return 1
 
@@ -69,6 +75,9 @@ validate-utf8() {
 		elif (( (b1 & 2#11111000) == 2#11110000 )); then
 			# 4 byte character
 			n=4
+
+			# check for overlong sequences
+			(( (b1 & 2#00011111) > 0 )) || return 1
 
 			(( i + 3 < len )) || return 1
 
@@ -94,15 +103,6 @@ validate-utf8() {
 
 		# at this point we have a codepoint and we've filtered out
 		# invalid "looking" bytes, but we still have more work to do
-
-		# check for overlong sequences
-		case "$n" in
-			1) ((cp >= 0x00000000 && cp <= 0x0000007F)) || return 1;;
-			2) ((cp >= 0x00000080 && cp <= 0x000007FF)) || return 1;;
-			3) ((cp >= 0x00000800 && cp <= 0x0000FFFF)) || return 1;;
-			4) ((cp >= 0x00010000 && cp <= 0x0010FFFF)) || return 1;;
-			*) exit 1;;
-		esac
 
 		# check for utf-16 surrogate pair domain
 		# U+D800 and U+DFFF
