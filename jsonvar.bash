@@ -278,7 +278,7 @@ _jv-encode-variable() {
 
 }
 
-jsonvar() {
+_jv-jsonvar() {
 	local _jv_all='false'
 	local _jv_exported='false'
 	local _jv_value='false'
@@ -375,6 +375,24 @@ jsonvar() {
 		echo
 	done
 	$_jv_value || echo '}'
+}
+
+jsonvar() {
+	# pattern matching must be case sensitive
+	local _jv_ret _jv_nocasematch='false'
+	if shopt -q nocasematch; then
+		_jv_nocasematch='true'
+		shopt -u nocasematch
+	fi
+
+	_jv-jsonvar "$@"
+	_jv_ret=$?
+
+	if $_jv_nocasematch; then
+		shopt -s nocasematch
+	fi
+
+	return "$_jv_ret"
 }
 
 _jv-complete() {
