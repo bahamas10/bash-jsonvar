@@ -222,6 +222,12 @@ _jv-encode-variable() {
 	local _jv_attrs
 	IFS=' ' read -r _ _jv_attrs _ < <(declare -p -- "$_jv_name")
 
+	# declared but never set
+	if [[ $_jv_attrs != *[aAn]* && ! -v _jv_ref ]]; then
+		printf 'null'
+		return
+	fi
+
 	case "$_jv_attrs" in
 		*n*) # process namerefs
 			# todo maybe warn?
