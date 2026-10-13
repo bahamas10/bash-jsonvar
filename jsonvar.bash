@@ -245,9 +245,15 @@ _jv-encode-variable() {
 			;;
 		*A*) # process associative array
 			echo -n '{'
-			local _jv_key _jv_value _jv_i=0
+			local _jv_key _jv_value _jv_sep=''
 			for _jv_key in "${!_jv_ref[@]}"; do
-				((_jv_i++))
+				# keys must be strings
+				if ! _jv-validate-utf8 "$_jv_key"; then
+					continue
+				fi
+
+				echo -n "$_jv_sep"
+				_jv_sep=', '
 
 				_jv_value=${_jv_ref[$_jv_key]}
 
@@ -258,10 +264,6 @@ _jv-encode-variable() {
 					_jv-json-encode-number "$_jv_value"
 				else
 					_jv-json-encode-string "$_jv_value"
-				fi
-
-				if ((_jv_i < ${#_jv_ref[@]})); then
-					echo -n ', '
 				fi
 			done
 			echo -n '}'
