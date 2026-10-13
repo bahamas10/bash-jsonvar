@@ -24,6 +24,10 @@ _jv-usage() {
 	    -h    show this message and exit
 	EOF
 	echo "$usage"
+
+	if declare -F _jv-exp-usage &>/dev/null; then
+		_jv-exp-usage
+	fi
 }
 
 # validate strings that bash supports (no nul support)
@@ -145,6 +149,10 @@ _jv-json-encode-string() {
 
 	# let's ensure the string is utf-8 before doing anything
 	if ! _jv-validate-utf8 "$s"; then
+		if [[ -n ${_jv_exp[bytes]-} ]]; then
+			_jv-exp-bytes "$s"
+			return 0
+		fi
 		printf 'null'
 		return 0
 	fi
@@ -208,16 +216,33 @@ _jv-json-encode-number() {
 	printf '%s' "$num"
 }
 
+# encode a string value
+_jv-json-encode-value() {
+	if [[ -n ${_jv_exp[types]-} ]] && _jv-exp-types "$1"; then
+		return 0
+	fi
+	_jv-json-encode-string "$1"
+}
+
 _jv-encode-variable() {
 	local _jv_name=$1
-	local -n _jv_ref=$_jv_name
-
-	# before looking into the variable by name using a nameref we are going
-	# to cowardly refuse to look into variables that themselves are a
-	# nameref.
-	# see https://github.com/bahamas10/bash-jsonvar/issues/6
 	local _jv_attrs
-	IFS=' ' read -r _ _jv_attrs _ < <(declare -p -- "$_jv_name")
+
+	if [[ -n ${_jv_exp[internal]-} ]]; then
+		# look at a local copy instead, see experiments.bash
+		local _jv_copy_def
+		_jv-exp-internal-copy "$_jv_name"
+		eval "$_jv_copy_def"
+		local -n _jv_ref=_jv_copy
+	else
+		local -n _jv_ref=$_jv_name
+
+		# before looking into the variable by name using a nameref we
+		# are going to cowardly refuse to look into variables that
+		# themselves are a nameref.
+		# see https://github.com/bahamas10/bash-jsonvar/issues/6
+		IFS=' ' read -r _ _jv_attrs _ < <(declare -p -- "$_jv_name")
+	fi
 
 	case "$_jv_attrs" in
 		*n*) # process namerefs
@@ -225,6 +250,10 @@ _jv-encode-variable() {
 			echo -n 'null'
 			;;
 		*a*) # process indexed array
+			if [[ -n ${_jv_exp[sparse]-} ]] && _jv-exp-sparse; then
+				return 0
+			fi
+
 			echo -n '['
 			local _jv_value _jv_i=0
 			for _jv_value in "${_jv_ref[@]}"; do
@@ -234,7 +263,7 @@ _jv-encode-variable() {
 				if [[ $_jv_attrs == *i* ]]; then
 					_jv-json-encode-number "$_jv_value"
 				else
-					_jv-json-encode-string "$_jv_value"
+					_jv-json-encode-value "$_jv_value"
 				fi
 
 				if ((_jv_i < ${#_jv_ref[@]})); then
@@ -257,7 +286,7 @@ _jv-encode-variable() {
 				if [[ $_jv_attrs == *i* ]]; then
 					_jv-json-encode-number "$_jv_value"
 				else
-					_jv-json-encode-string "$_jv_value"
+					_jv-json-encode-value "$_jv_value"
 				fi
 
 				if ((_jv_i < ${#_jv_ref[@]})); then
@@ -270,16 +299,32 @@ _jv-encode-variable() {
 			_jv-json-encode-number "$_jv_ref"
 			;;
 		*) # anything else, it's probably a string lol
-			_jv-json-encode-string "$_jv_ref"
+			_jv-json-encode-value "$_jv_ref"
 			;;
 	esac
 
 }
 
-jsonvar() {
+_jv-jsonvar() {
 	local _jv_all='false'
 	local _jv_exported='false'
 	local _jv_value='false'
+
+	# experimental features, see experiments.bash
+	local -A _jv_exp=()
+	local -a _jv_args=()
+	if declare -F _jv-exp-args &>/dev/null; then
+		_jv-exp-args "$@" || return
+		set -- "${_jv_args[@]}"
+	else
+		local _jv_arg
+		for _jv_arg in "$@"; do
+			if [[ $_jv_arg == -x || $_jv_arg == --experimental ]]; then
+				echo "[error] $_jv_arg needs experiments.bash" >&2
+				return 2
+			fi
+		done
+	fi
 
 	# get arguments from user
 	local OPTIND OPTARG _jv_opt
@@ -298,7 +343,9 @@ jsonvar() {
 
 	# figure out what variables to look at
 	local -a _jv_variables
-	if $_jv_all; then
+	if [[ -n ${_jv_exp[internal]-} ]] && { $_jv_all || $_jv_exported; }; then
+		_jv-exp-internal-list
+	elif $_jv_all; then
 		readarray -t _jv_variables < <(compgen -v)
 	elif $_jv_exported; then
 		readarray -t _jv_variables < <(compgen -e)
@@ -316,13 +363,18 @@ jsonvar() {
 		local _jv_error='false'
 		for _jv_key in "${_jv_variables[@]}"; do
 			# warn the user if they gave us an internal name
-			if [[ $_jv_key == _jv_* ]]; then
+			if [[ -z ${_jv_exp[internal]-} && $_jv_key == _jv_* ]]; then
 				echo "[error] invalid internal variable '$_jv_key'" >&2
 				_jv_error='true'
 			fi
 
 			# check to make sure the variable is defined
-			if ! declare -p -- "$_jv_key" &>/dev/null; then
+			if [[ -n ${_jv_exp[internal]-} ]]; then
+				if ! _jv-exp-internal-defined "$_jv_key"; then
+					echo "[error] variable '$_jv_key' not defined" >&2
+					_jv_error='true'
+				fi
+			elif ! declare -p -- "$_jv_key" &>/dev/null; then
 				echo "[error] variable '$_jv_key' not defined" >&2
 				_jv_error='true'
 			fi
@@ -340,7 +392,7 @@ jsonvar() {
 		_jv_key=${_jv_variables[_jv_i]}
 
 		# filter out internal variables by name
-		if [[ $_jv_key == _jv_* ]]; then
+		if [[ -z ${_jv_exp[internal]-} && $_jv_key == _jv_* ]]; then
 			unset '_jv_variables[_jv_i]'
 			continue
 		fi
@@ -375,6 +427,10 @@ jsonvar() {
 	$_jv_value || echo '}'
 }
 
+jsonvar() {
+	_jv-jsonvar "$@"
+}
+
 _jv-complete() {
 	COMPREPLY=(
 		# add all variables
@@ -384,6 +440,11 @@ _jv-complete() {
 		$(compgen -W '-a -e -v -h' -- "${COMP_WORDS[COMP_CWORD]}")
 	)
 }
+
+# load experimental features if they're there
+_jv_dir=${BASH_SOURCE[0]%"${BASH_SOURCE[0]##*/}"}
+[[ -f ${_jv_dir}experiments.bash ]] && . "${_jv_dir}experiments.bash"
+unset _jv_dir
 
 if ( return 0 &>/dev/null ); then
 	# we are being sourced
