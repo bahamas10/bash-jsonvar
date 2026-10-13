@@ -49,10 +49,31 @@ Known Limitations
 
 1. Only handles variable names that bash considers valid
 2. Filters out variables that start with `_jv_` since they are used internally,
-   use `jsonvar -x internal ...` (or `--experimental`) to allow them
+   use `jsonvar -x internal ...` to allow them (see Experimental)
 3. Sparse arrays are squished when exported, use `jsonvar -x sparse ...` to
-   keep their indices
+   keep their indices (see Experimental)
 4. Namerefs are not supported and will result in a `null` representation
+
+Experimental
+------------
+
+Experimental features live in `experiments.bash`. If it's next to
+`jsonvar.bash` they're loaded and listed in `jsonvar -h`, without it `-x`
+gives an error.
+
+``` bash
+jsonvar -x types foo
+jsonvar foo -x '[sparse, types, bytes]'
+```
+
+- `internal` allow variables named `_jv_*`
+- `sparse` keep the indices of sparse arrays, as an object
+- `types` print `true`, `false`, `null` and numbers in strings as JSON types
+- `bytes` escape strings that aren't valid utf-8 byte by byte instead of `null`
+
+`./experiments.bash merge` makes `jsonvar.exp.bash`, a single file with
+`experiments.bash` put in place of where `jsonvar.bash` sources it. Lines from
+`[[exp del tag start]]` to `[[exp del tag finish]]` are left out of it.
 
 YouTube
 -------
