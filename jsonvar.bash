@@ -193,6 +193,9 @@ _jv-json-encode-number() {
 	local num=$1
 	local re='^-?([0-9]+)$'
 
+	# don't touch the caller's BASH_REMATCH
+	local BASH_REMATCH
+
 	# make sure it walks like a duck
 	if ! [[ $num =~ $re ]]; then
 		printf 'null'
