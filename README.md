@@ -48,8 +48,10 @@ Known Limitations
 -----------------
 
 1. Only handles variable names that bash considers valid
-2. Filters out variables that start with `_jv_` since they are used internally
-3. Sparse arrays are squished when exported
+2. Filters out variables that start with `_jv_` since they are used internally,
+   use `jsonvar -x internal ...` (or `--experimental`) to allow them
+3. Sparse arrays are squished when exported, use `jsonvar -x sparse ...` to
+   keep their indices
 4. Namerefs are not supported and will result in a `null` representation
 
 YouTube
