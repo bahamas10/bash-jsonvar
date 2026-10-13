@@ -23,7 +23,7 @@ _jv-usage() {
 	    -v    show only the values of the variables
 	    -h    show this message and exit
 	EOF
-	echo "$usage"
+	printf '%s\n' "$usage"
 }
 
 # validate strings that bash supports (no nul support)
@@ -225,10 +225,10 @@ _jv-encode-variable() {
 	case "$_jv_attrs" in
 		*n*) # process namerefs
 			# todo maybe warn?
-			echo -n 'null'
+			printf 'null'
 			;;
 		*a*) # process indexed array
-			echo -n '['
+			printf '['
 			local _jv_value _jv_i=0
 			for _jv_value in "${_jv_ref[@]}"; do
 				((_jv_i++))
@@ -241,13 +241,13 @@ _jv-encode-variable() {
 				fi
 
 				if ((_jv_i < ${#_jv_ref[@]})); then
-					echo -n ', '
+					printf ', '
 				fi
 			done
-			echo -n ']'
+			printf ']'
 			;;
 		*A*) # process associative array
-			echo -n '{'
+			printf '{'
 			local _jv_key _jv_value _jv_sep=''
 			for _jv_key in "${!_jv_ref[@]}"; do
 				# keys must be strings
@@ -255,13 +255,13 @@ _jv-encode-variable() {
 					continue
 				fi
 
-				echo -n "$_jv_sep"
+				printf '%s' "$_jv_sep"
 				_jv_sep=', '
 
 				_jv_value=${_jv_ref[$_jv_key]}
 
 				_jv-json-encode-string "$_jv_key"
-				echo -n ': '
+				printf ': '
 
 				if [[ $_jv_attrs == *i* ]]; then
 					_jv-json-encode-number "$_jv_value"
@@ -269,7 +269,7 @@ _jv-encode-variable() {
 					_jv-json-encode-string "$_jv_value"
 				fi
 			done
-			echo -n '}'
+			printf '}'
 			;;
 		*i*) # process integer
 			_jv-json-encode-number "$_jv_ref"
@@ -312,7 +312,7 @@ _jv-jsonvar() {
 
 		# ensure the user gave us *something*
 		if (( ${#_jv_variables[@]} == 0 )); then
-			echo 'variable name or flag required' >&2
+			printf '%s\n' 'variable name or flag required' >&2
 			_jv-usage >&2
 			return 2
 		fi
@@ -322,13 +322,13 @@ _jv-jsonvar() {
 		for _jv_key in "${_jv_variables[@]}"; do
 			# warn the user if they gave us an internal name
 			if [[ $_jv_key == _jv_* ]]; then
-				echo "[error] invalid internal variable '$_jv_key'" >&2
+				printf '%s\n' "[error] invalid internal variable '$_jv_key'" >&2
 				_jv_error='true'
 			fi
 
 			# check to make sure the variable is defined
 			if ! declare -p -- "$_jv_key" &>/dev/null; then
-				echo "[error] variable '$_jv_key' not defined" >&2
+				printf '%s\n' "[error] variable '$_jv_key' not defined" >&2
 				_jv_error='true'
 			fi
 		done
@@ -354,18 +354,18 @@ _jv-jsonvar() {
 	done
 
 	# loop the remaining variables and format them
-	$_jv_value || echo '{'
+	$_jv_value || printf '{\n'
 	_jv_i=0
 	for _jv_key in "${_jv_variables[@]}"; do
 		((_jv_i++))
 
 		if ! $_jv_value; then
 			# indent
-			echo -n '    '
+			printf '    '
 
 			# print the key
 			_jv-json-encode-string "$_jv_key"
-			echo -n ': '
+			printf ': '
 		fi
 
 		# print the value
@@ -373,11 +373,11 @@ _jv-jsonvar() {
 
 		# optionally print the comma
 		if ! $_jv_value && ((_jv_i < ${#_jv_variables[@]})); then
-			echo -n ','
+			printf ','
 		fi
-		echo
+		printf '\n'
 	done
-	$_jv_value || echo '}'
+	$_jv_value || printf '}\n'
 }
 
 jsonvar() {
