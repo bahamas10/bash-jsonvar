@@ -29,6 +29,7 @@ _jv-usage() {
 # validate strings that bash supports (no nul support)
 _jv-validate-utf8() {
 	local s=$1
+	local chunk_size=${_jv_chunk_size:-1024}
 
 	# 0xxxxxxx                            1 byte,  7 bits
 	# 110xxxxx 10xxxxxx                   2 bytes, 11 bits
@@ -39,11 +40,18 @@ _jv-validate-utf8() {
 	local len=${#s}
 
 	local i=0
+	local offset=-$chunk_size
+	local chunk
+	local cp b1 b2 b3 b4 n cur
 	while ((i < len)); do
-		local cp b1 b2 b3 b4 n
+		if (( (i / chunk_size) != (offset / chunk_size) )); then
+			offset=$i
+			chunk=${s:i:chunk_size+4}
+		fi
+		cur=${chunk:i-offset:4}
 
 		# grab first byte
-		printf -v b1 '%d' "'${s:i:1}"
+		printf -v b1 '%d' "'${cur:0:1}"
 
 		# check: b is 0xxxxxxx (1 octet)
 		if (( (b1 & 2#10000000) == 0 )); then
@@ -60,7 +68,7 @@ _jv-validate-utf8() {
 
 			(( i + 1 < len )) || return 1
 
-			printf -v b2 '%d' "'${s:i+1:1}"
+			printf -v b2 '%d' "'${cur:1:1}"
 
 			(( (b2 & 2#11000000) == 2#10000000 )) || return 1
 
@@ -77,8 +85,8 @@ _jv-validate-utf8() {
 
 			(( i + 2 < len )) || return 1
 
-			printf -v b2 '%d' "'${s:i+1:1}"
-			printf -v b3 '%d' "'${s:i+2:1}"
+			printf -v b2 '%d' "'${cur:1:1}"
+			printf -v b3 '%d' "'${cur:2:1}"
 
 			(( (b2 & 2#11000000) == 2#10000000 )) || return 1
 			(( (b3 & 2#11000000) == 2#10000000 )) || return 1
@@ -97,9 +105,9 @@ _jv-validate-utf8() {
 
 			(( i + 3 < len )) || return 1
 
-			printf -v b2 '%d' "'${s:i+1:1}"
-			printf -v b3 '%d' "'${s:i+2:1}"
-			printf -v b4 '%d' "'${s:i+3:1}"
+			printf -v b2 '%d' "'${cur:1:1}"
+			printf -v b3 '%d' "'${cur:2:1}"
+			printf -v b4 '%d' "'${cur:3:1}"
 
 			(( (b2 & 2#11000000) == 2#10000000 )) || return 1
 			(( (b3 & 2#11000000) == 2#10000000 )) || return 1
@@ -110,7 +118,7 @@ _jv-validate-utf8() {
 				((b1 & 2#00000111) << 18) |
 				((b2 & 2#00111111) << 12) |
 				((b3 & 2#00111111) << 6) |
-				 (b4 & 2#00111111)
+				(b4 & 2#00111111)
 			))
 		else
 			return 1
@@ -171,9 +179,13 @@ _jv-json-encode-string() {
 	# serialize the string
 	local out=''
 	local len=${#s}
-	local c
+	local c chunk
 	for ((i = 0; i < len; i++)); do
-		c=${s:i:1}
+		if (( (i % _jv_chunk_size) == 0 )); then
+			chunk=${s:i:_jv_chunk_size}
+		fi
+		c=${chunk:i%_jv_chunk_size:1}
+
 		esc=${table[$c]-}
 
 		if [[ -n $esc ]]; then
@@ -288,6 +300,7 @@ _jv-encode-variable() {
 }
 
 _jv-jsonvar() {
+	local _jv_chunk_size=1024
 	local _jv_all='false'
 	local _jv_exported='false'
 	local _jv_value='false'
