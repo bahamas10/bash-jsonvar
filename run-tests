@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+cd ./tests || exit 1
+
+code=0
+for f in ./test-*; do
+	echo "running $f"
+	"$f" || code=1
+	echo
+done
+
+if ((code == 0)); then
+	echo 'All Tests Pass'
+else
+	echo 'Some Tests Failed'
+fi
+
+exit "$code"

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+. ./utils.bash || exit 1
+. ../jsonvar.bash || exit 1
+
+test-simple-encoding() {
+	declare -A tests=(
+		['foo']='"foo"'
+		['bar']='"bar"'
+		['hello world!']='"hello world!"'
+	)
+	local key value my_var output msg
+	for key in "${!tests[@]}"; do
+		value=${tests[$key]}
+
+		my_var=$key
+
+		output=${ jsonvar -v my_var; } || exit 1
+
+		msg="encoding ${key@Q} => $value"
+		is-equal "$msg" "$value" "$output"
+	done
+}
+
+test-simple-encoding

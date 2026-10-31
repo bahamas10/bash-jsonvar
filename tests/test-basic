@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+. ./utils.bash || exit 1
+. ../jsonvar.bash || exit 1
+
+cmd-valid -- jsonvar -h
+cmd-valid -- jsonvar -a
+cmd-valid -- jsonvar -e
+cmd-valid -- jsonvar BASH
+cmd-valid -- jsonvar PWD
+cmd-valid -- jsonvar -v BASH
+cmd-valid -- jsonvar -v PWD
+cmd-valid -- jsonvar BASH PWD BASHPID
+cmd-valid -- jsonvar -v BASH PWD BASHPID
+
+cmd-invalid -- jsonvar
+cmd-invalid -- jsonvar -q
+cmd-invalid -- jsonvar -5
+cmd-invalid -- jsonvar -thisdoesnotexistlol
+cmd-invalid -- jsonvar THISDOESNOTEXIST
+cmd-invalid -- jsonvar -v THISDOESNOTEXIST

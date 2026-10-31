@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+. ./utils.bash || exit 1
+. ../jsonvar.bash || exit 1
+
+test-valid-strings() {
+	local strings=(
+		''
+		'a'
+		'hello'
+		$'\xc2\xa4' # 2 byte string: ¤
+		$'\xe2\x9b\x84' # 3 byte string: ⛄
+		$'\xf0\x9f\xa5\xb7' # 4 byte string: 🥷
+		'⛄'
+	)
+
+	local s msg
+	for s in "${strings[@]}"; do
+		msg="ensuring valid: ${s@Q}"
+		cmd-valid "$msg" _jv-validate-utf8 "$s"
+	done
+}
+
+test-invalid-strings() {
+	local strings=(
+		$'a\xffb'
+		$'\xc2\xff' # 2 byte string: bad continuation marker
+
+		# overlong "!"
+		$'\xc0\x95'
+
+		# utf-16 surrogate pairs
+		# U+D800 and U+DFFF
+		$'\ud800'
+		$'\ud801'
+		$'\ud802'
+		$'\ud803'
+		# ...
+		$'\udfff'
+	)
+
+	local s msg
+	for s in "${strings[@]}"; do
+		msg="ensuring invalid: ${s@Q}"
+		cmd-invalid "$msg" _jv-validate-utf8 "$s"
+	done
+}
+
+test-utf16-surrogate-pairs() {
+	# utf-16 surrogate pairs
+	# U+D800 and U+DFFF
+	local cp s hex msg
+	for ((cp = 0xd800; cp <= 0xdfff; cp++)); do
+		printf -v hex '%04x' "$cp"
+		printf -v s "\\u$hex"
+
+		msg="ensure surrogate pair invalid: $hex"
+		cmd-invalid "$msg" _jv-validate-utf8 "$s"
+	done
+}
+
+test-valid-strings
+test-invalid-strings
+test-utf16-surrogate-pairs

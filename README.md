@@ -52,6 +52,17 @@ Known Limitations
 3. Sparse arrays are squished when exported
 4. Namerefs are not supported and will result in a `null` representation
 
+Testing
+-------
+
+```
+./runtests
+...
+...
+...
+All Tests Pass
+```
+
 YouTube
 -------
 

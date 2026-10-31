@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+. ./utils.bash || exit 1
+. ../jsonvar.bash || exit 1
+
+test-invalid() {
+	local output
+
+	unset my_var
+	declare -a my_var=(0 1 2 0xff foo bar baz)
+	declare -i my_var
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing mixed arrays' \
+	    "$output" '[0, 1, 2, null, null, null, null]'
+
+	unset my_var
+	declare -A my_var=([foo]=0 [bar]=1 [baz]=0xff [bat]=foo)
+	declare -i my_var
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing mixed assoc arrays' \
+	    "$output" '{"foo": 0, "bar": 1, "bat": null, "baz": null}'
+
+	unset my_var
+	my_var='hello world'
+	declare -i my_var
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing bad int' \
+	    "$output" 'null'
+
+	declare -a array=()
+	unset my_var
+	declare -n my_var='test_indexed'
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing nameref' \
+	    "$output" 'null'
+
+	unset my_var
+	my_var='08'
+	declare -i my_var
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing bad octal' \
+	    "$output" 'null'
+
+	unset my_var
+	my_var=99999999999999999999999
+	declare -i my_var
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing big number' \
+	    "$output" 'null'
+
+	unset my_var
+	my_var=$'a\xffb'
+	output=${ jsonvar -v my_var; } || exit 1
+	is-equal 'testing bad utf8' \
+	    "$output" 'null'
+}
+
+test-invalid
