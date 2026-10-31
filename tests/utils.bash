@@ -1,5 +1,5 @@
 NUM_TESTS=0
-NUM_FAIL=0
+NUM_PASS=0
 
 is-equal() {
 	_format-message -- "$@"
@@ -46,18 +46,15 @@ _format-output() {
 	((NUM_TESTS++))
 	if ((code == 0)); then
 		echo "${green}ok${rst}"
+		((NUM_PASS++))
 	else
 		echo "${red}fail${rst}"
-		((NUM_FAIL++))
 	fi
 }
 
 utils-finish() {
-	if ((NUM_FAIL == 0)); then
-		echo "all tests pass ($NUM_TESTS tests)"
-		exit 0
-	else
-		echo "failed $NUM_FAIL / $NUM_TESTS tests"
+	echo "passed $NUM_PASS / $NUM_TESTS tests"
+	if ((NUM_PASS < NUM_TESTS)); then
 		exit 1
 	fi
 }
