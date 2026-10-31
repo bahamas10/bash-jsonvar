@@ -3,56 +3,66 @@
 . ./utils.bash || exit 1
 . ../jsonvar.bash || exit 1
 
+declare -a INDEXED_ARR
+declare -A ASSOC_ARR
+declare BASIC_VAR
+
+invalid-indexed() {
+	msg=$1
+	expected_output=$2
+	output=${ jsonvar -v INDEXED_ARR 2>/dev/null; } || exit 1
+	is-equal "$msg" "$output" "$expected_output"
+}
+
+invalid-assoc() {
+	msg=$1
+	expected_output=$2
+	output=${ jsonvar -v ASSOC_ARR 2>/dev/null; } || exit 1
+	is-equal "$msg" "$output" "$expected_output"
+}
+
+invalid-basic() {
+	msg=$1
+	expected_output=$2
+	output=${ jsonvar -v BASIC_VAR 2>/dev/null; } || exit 1
+	is-equal "$msg" "$output" "$expected_output"
+}
+
 test-invalid() {
-	local output
+	declare -a INDEXED_ARR=(0 1 2 0xff foo bar baz)
+	declare -i INDEXED_ARR
+	invalid-indexed 'testing mixed arrays' \
+		'[0, 1, 2, null, null, null, null]'
+	declare +i INDEXED_ARR
 
-	unset my_var
-	declare -a my_var=(0 1 2 0xff foo bar baz)
-	declare -i my_var
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing mixed arrays' \
-	    "$output" '[0, 1, 2, null, null, null, null]'
+	declare -A ASSOC_ARR=([foo]=0 [bar]=1 [baz]=0xff [bat]=foo)
+	declare -i ASSOC_ARR
+	invalid-assoc 'testing mixed assoc arrays' \
+		'{"foo": 0, "bar": 1, "bat": null, "baz": null}'
+	declare +i ASSOC_ARR
 
-	unset my_var
-	declare -A my_var=([foo]=0 [bar]=1 [baz]=0xff [bat]=foo)
-	declare -i my_var
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing mixed assoc arrays' \
-	    "$output" '{"foo": 0, "bar": 1, "bat": null, "baz": null}'
+	BASIC_VAR='hello world'
+	declare -i BASIC_VAR
+	invalid-basic 'testing bad int' 'null'
+	declare +i BASIC_VAR
 
-	unset my_var
-	my_var='hello world'
-	declare -i my_var
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing bad int' \
-	    "$output" 'null'
+	BASIC_VAR='INDEXED_ARR'
+    declare -n BASIC_VAR
+	invalid-basic 'testing nameref' 'null'
+    declare +n BASIC_VAR
 
-	declare -a array=()
-	unset my_var
-	declare -n my_var='test_indexed'
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing nameref' \
-	    "$output" 'null'
+	BASIC_VAR='08'
+	declare -i BASIC_VAR
+	invalid-basic 'testing bad octal' 'null'
+	declare +i BASIC_VAR
 
-	unset my_var
-	my_var='08'
-	declare -i my_var
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing bad octal' \
-	    "$output" 'null'
+	BASIC_VAR=99999999999999999999999
+	declare -i BASIC_VAR
+	invalid-basic 'testing big number' 'null'
+	declare +i BASIC_VAR
 
-	unset my_var
-	my_var=99999999999999999999999
-	declare -i my_var
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing big number' \
-	    "$output" 'null'
-
-	unset my_var
-	my_var=$'a\xffb'
-	output=${ jsonvar -v my_var; } || exit 1
-	is-equal 'testing bad utf8' \
-	    "$output" 'null'
+	BASIC_VAR=$'a\xffb'
+	invalid-basic 'testing bad utf8' 'null'
 }
 
 test-invalid
