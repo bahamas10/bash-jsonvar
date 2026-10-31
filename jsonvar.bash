@@ -12,7 +12,7 @@
 
 _jv-usage() {
 	local usage
-	IFS=$' \n\t' read -r -d '' usage <<-EOF || true
+	IFS=$' \n\t' read -r -d '' usage <<-EOF
 	Usage: jsonvar [-aev] [[name], ...]
 
 	Serialize bash variables to JSON output
@@ -249,7 +249,7 @@ _jv-encode-variable() {
 			printf '['
 			local _jv_value _jv_i=0
 			for _jv_value in "${_jv_ref[@]}"; do
-				((++_jv_i))
+				((_jv_i++))
 
 				# check member type
 				if [[ $_jv_attrs == *i* ]]; then
@@ -394,7 +394,7 @@ _jv-jsonvar() {
 	$_jv_value || printf '{\n'
 	_jv_i=0
 	for _jv_key in "${_jv_variables[@]}"; do
-		((++_jv_i))
+		((_jv_i++))
 
 		if ! $_jv_value; then
 			# indent
@@ -417,23 +417,14 @@ _jv-jsonvar() {
 	$_jv_value || printf '}\n'
 }
 
-jsonvar() {
-	# pattern matching must be case sensitive
-	local _jv_ret _jv_nocasematch='false'
-	if shopt -q nocasematch; then
-		_jv_nocasematch='true'
-		shopt -u nocasematch
-	fi
+jsonvar() (
+	shopt -u nocasematch
+	set +e
+	set +u
+	set +o posix
 
 	_jv-jsonvar "$@"
-	_jv_ret=$?
-
-	if $_jv_nocasematch; then
-		shopt -s nocasematch
-	fi
-
-	return "$_jv_ret"
-}
+)
 
 _jv-complete() {
 	COMPREPLY=(
