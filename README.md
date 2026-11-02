@@ -72,8 +72,9 @@ YouTube
 
 Watch me build this live on YouTube.
 
-<a href="https://www.youtube.com/watch?v=GXw67QpDPCE"><img alt="Bash jsonvar YouTube
-Thumbnail" src="https://files.daveeddy.com/ysap/bash-jsonvar-thumbnail.jpg"
+<a href="https://www.youtube.com/watch?v=GXw67QpDPCE"><img
+alt="Bash jsonvar YouTube Thumbnail"
+src="https://i.ytimg.com/vi/GXw67QpDPCE/maxresdefault.jpg"
 /></a>
 
 License
