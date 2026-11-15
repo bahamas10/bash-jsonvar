@@ -3,7 +3,7 @@ bash-jsonvar
 
 Export variables in bash to JSON
 
-This is meant for educations purposes only - literally don't expect anything to
+This is meant for educational purposes only - literally don't expect anything to
 work in this repo at all lol. It was made for entertainment purposes on YouTube
 (linked below).
 
