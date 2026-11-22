@@ -14,5 +14,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check environment
+        run: |
+          type -a bash
+          bash --version
+
       - name: Run tests
         run: ./run-tests
