@@ -2,13 +2,32 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Bash on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install bash
+
+      - name: Check environment
+        run: |
+          type -a bash
+          bash --version
+
+      - name: Check Syntax
+        run: make check
+
       - name: Run tests
-        run: ./run-tests
+        run: make test

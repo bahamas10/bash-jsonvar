@@ -60,12 +60,14 @@ Testing
 -------
 
 ```
-./run-tests
-...
-...
-...
-All Tests Pass
+make check
+make test
 ```
+
+Known Limitations
+-----------------
+
+- Requires bash version >= 4.0.
 
 YouTube
 -------
