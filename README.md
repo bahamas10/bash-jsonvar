@@ -67,6 +67,11 @@ Testing
 All Tests Pass
 ```
 
+Known Limitations
+-----------------
+
+- Requires bash version >= 4.0.
+
 YouTube
 -------
 
