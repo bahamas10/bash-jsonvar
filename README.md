@@ -60,11 +60,8 @@ Testing
 -------
 
 ```
-./run-tests
-...
-...
-...
-All Tests Pass
+make check
+make test
 ```
 
 Known Limitations

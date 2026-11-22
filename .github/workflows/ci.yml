@@ -26,5 +26,8 @@ jobs:
           type -a bash
           bash --version
 
+      - name: Check Syntax
+        run: make check
+
       - name: Run tests
-        run: ./run-tests
+        run: make test
