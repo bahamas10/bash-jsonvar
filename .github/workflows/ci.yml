@@ -15,6 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Bash on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew install bash
+
       - name: Check environment
         run: |
           type -a bash
