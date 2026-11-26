@@ -134,7 +134,7 @@ _jv-validate-utf8() {
 			2) ((cp >= 0x00000080 && cp <= 0x000007FF)) || return 1;;
 			3) ((cp >= 0x00000800 && cp <= 0x0000FFFF)) || return 1;;
 			4) ((cp >= 0x00010000 && cp <= 0x0010FFFF)) || return 1;;
-			*) exit 1;;
+			*) return 1;;
 		esac
 
 		# check for utf-16 surrogate pair domain
